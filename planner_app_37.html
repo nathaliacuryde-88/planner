@@ -437,6 +437,9 @@ body{
 .swap-opt:active{background:var(--gbg);}
 .swap-opt-name{flex:1;font-weight:700;}
 .swap-opt-mac{font-size:10px;font-family:'JetBrains Mono',monospace;color:var(--mu);}
+.snack-pick-opt{display:flex;align-items:center;padding:10px 12px;border-radius:12px;cursor:pointer;font-size:12px;gap:8px;background:var(--s2);border:1.5px solid transparent;transition:background .12s,border-color .12s;}
+.snack-pick-opt.spo-sel{background:var(--gbg);border-color:var(--gym);}
+.spo-chk{margin-left:auto;width:18px;text-align:center;font-weight:800;color:var(--gym);font-size:14px;}
 .swap-match{font-size:10px;padding:2px 7px;border-radius:20px;font-weight:800;flex-shrink:0;}
 .m-eq{background:var(--gbg);color:var(--gym);}.m-cl{background:var(--yelb);color:#6a5800;}
 .step{display:flex;gap:10px;padding:8px 0;border-bottom:1.5px solid var(--bd);}
@@ -655,7 +658,7 @@ canvas#wChart{width:100%;height:155px;display:block;margin-bottom:14px;}
     <div id="wkRange" style="text-align:center;flex:1;font-size:13px;font-weight:600;color:var(--mu);"></div>
     <button class="wkbtn" onclick="changeWeek(1)">&#8250;</button>
   </div>
-  <div class="chips mobile-only" id="chips" style="margin-bottom:8px;"></div>
+  <div class="chips mobile-only" id="chips" style="display:none;"></div>
 
   <div id="wbb" class="wbb mobile-only" style="display:none;"></div>
   <div class="toolbar mobile-only">
@@ -673,7 +676,7 @@ canvas#wChart{width:100%;height:155px;display:block;margin-bottom:14px;}
       </div>
       <button class="wkbtn" onclick="changeWeek(1)">&#8250;</button>
     </div>
-    <div class="chips" id="chipsD"></div>
+    <div class="chips" id="chipsD" style="display:none;"></div>
 
     <div id="wbbD" class="wbb" style="display:none;margin-bottom:10px;"></div>
     <div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap;">
@@ -1026,6 +1029,23 @@ var SNACKS = [
   {id:'apple_pb',name:'Apple + peanut butter',protein:5,kcal:190},
   {id:'choc_b',name:'Dark choc + frozen berries',protein:3,kcal:160},
 ];
+var SNACK_OPTIONS = [
+  {id:'apple_pb',name:'Apple + peanut butter',kcal:190,protein:5},
+  {id:'skyr_w',name:'Skyr + walnuts',kcal:160,protein:14},
+  {id:'choc_b',name:'Dark choc + berries',kcal:150,protein:3},
+  {id:'rice_hummus',name:'Rice cakes + hummus',kcal:150,protein:5},
+  {id:'prot_bar',name:'Protein bar',kcal:200,protein:15},
+  {id:'dates_alm',name:'Dates + almonds',kcal:185,protein:4},
+  {id:'egg_avo',name:'Boiled eggs + avocado',kcal:180,protein:12},
+  {id:'crackers_tuna',name:'Crackers + tuna',kcal:170,protein:16},
+  {id:'apple',name:'Apple',kcal:80,protein:0},
+  {id:'banana',name:'Banana',kcal:90,protein:1},
+  {id:'peanut_butter',name:'Peanut butter (1 tbsp)',kcal:95,protein:4},
+  {id:'almonds',name:'Almonds (20g)',kcal:120,protein:4},
+  {id:'yogurt',name:'Greek yogurt (150g)',kcal:130,protein:15},
+  {id:'rice_cake',name:'Rice cake (plain)',kcal:35,protein:1},
+  {id:'cottage_snack',name:'Cottage cheese (100g)',kcal:90,protein:11},
+];
 // Light lunches for rest days (≤320 kcal)
 var LUNCHES_LIGHT = [
   {id:'ll_tuna_salad',name:'Tuna salad bowl',kcal:290,protein:34,ingredients:[['Canned tuna','150g'],['Salad mix','100g'],['Cucumber','100g'],['Cherry tomatoes','80g'],['Radish','60g'],['Lemon','1/2'],['Olive oil','1 tsp']],steps:['Drain tuna.','Combine all veg.','Dress with lemon + oil.']},
@@ -1214,7 +1234,7 @@ function genMeals(exTypes) {
     var dUsed = isLight ? udl : ud;
     var l=pickMeal(lPool,lUsed), d=pickMeal(dPool,dUsed);
     lUsed[l.id]=1; dUsed[d.id]=1;
-    m[dk]={lunch:l,dinner:d,snack:SNACKS[Math.floor(Math.random()*SNACKS.length)]};
+    m[dk]={lunch:l,dinner:d,snacks:[SNACKS[Math.floor(Math.random()*SNACKS.length)]]};
   });
   return m;
 }
@@ -1321,7 +1341,8 @@ function getDayKcal(wk,dk){return getDayTotals(wk,dk).kcal;}
 // ── TIMELINE ─────────────────────────────────────────────────────────────
 function buildTimeline(wk,dk) {
   var W=APP.weeks[wk],ex=W.exTypes[dk],isWine=W.wineDays&&W.wineDays.indexOf(dk)>=0;
-  var M=W.meals[dk]||{},L=M.lunch,D=M.dinner,SN=M.snack;
+  var M=W.meals[dk]||{},L=M.lunch,D=M.dinner;
+  var SNS=M.snacks||(M.snack?[M.snack]:[]);
   var isHome=W.gymMode&&W.gymMode[dk]==='home';
   var evs=[];
   function add(time,id,data){evs.push({time:time,id:id,data:data});}
@@ -1346,11 +1367,11 @@ function buildTimeline(wk,dk) {
       add('11:30','pre',{cls:'c-pre',lbl:'Pre-pilates',name:'Pre-pilates snack',detail:'banana or crackers',protein:4,kcal:160,fkey:'prePil'});
       add('12:00','workout',{cls:'c-pilates',lbl:'Pilates',name:'Pilates - full body',detail:'60 min - ~'+KCAL_BURNED.pilates+' kcal burned',protein:0,kcal:0,burned:KCAL_BURNED.pilates,fkey:'pilates'});
       if(L)add('13:30','lunch',mealEv(L,'Lunch +','lunch',dk,true));
-      if(SN)add('16:30','snack',snackEv(SN,dk));
+      SNS.forEach(function(sn){add('16:30','snack_'+sn.id,snackEv(sn,dk));});
       if(D)add('19:30','dinner',mealEv(D,'Dinner','dinner',dk));
     } else {
       if(L)add('12:00','lunch',mealEv(L,'Lunch +','lunch',dk,true));
-      if(SN)add('16:30','snack',snackEv(SN,dk));
+      SNS.forEach(function(sn){add('16:30','snack_'+sn.id,snackEv(sn,dk));});
       add('17:30','pre',{cls:'c-pre',lbl:'Pre-pilates',name:'Pre-pilates snack',detail:'banana or crackers',protein:4,kcal:160,fkey:'prePil'});
       add('18:30','workout',{cls:'c-pilates',lbl:'Pilates',name:'Pilates - full body',detail:'60 min - ~'+KCAL_BURNED.pilates+' kcal burned',protein:0,kcal:0,burned:KCAL_BURNED.pilates,fkey:'pilates'});
       if(D)add('20:00','dinner',mealEv(D,'Dinner','dinner',dk));
@@ -1496,6 +1517,7 @@ function renderMobileCards(wk,td) {
       if(!sub) return;
       var btns = [
         {html:'&#127860; Meal',   fn:function(){openAddMeal(dkCap,false);}},
+        {html:'&#127857; Snack',  fn:function(){openSnackPicker(dkCap);}},
         {html:'&#127939; Exercise',     fn:function(){openExModal(dkCap);}},
         {html:'&#127863; Drinks',       fn:function(){openDrinksPanel(dkCap);}},
       ];
@@ -1503,7 +1525,7 @@ function renderMobileCards(wk,td) {
         var btn=document.createElement('button');
         btn.className='btn sm';btn.innerHTML=b.html;
         btn.addEventListener('click',b.fn);
-        sub.insertBefore(btn,sub.firstChild);
+        sub.appendChild(btn);
       });
     })(dk);
     if(expanded)renderTimeline(wk,dk);
@@ -1818,7 +1840,56 @@ function getSwapKey(n){
   return Object.keys(SWAPS).find(function(k){return nl.indexOf(k)>=0||(k.length>3&&k.indexOf(nl.split(' ')[0])>=0);})||null;
 }
 
+function openSnackPicker(dk){
+  var wk=APP.currentWeek;
+  ensureWk(wk);
+  var W=APP.weeks[wk];
+  var cur=W.meals&&W.meals[dk]&&(W.meals[dk].snacks||(W.meals[dk].snack?[W.meals[dk].snack]:[]));
+  if(!cur)cur=[];
+  var selIds={};
+  cur.forEach(function(sn){selIds[sn.id]=true;});
+  document.getElementById('ptag').textContent='Snack';
+  document.getElementById('ptitle').textContent='Pick your snacks';
+  document.getElementById('psub').textContent='Tap to add or remove — mix and match freely';
+  var html='<div class="p-sec">Select one or more snacks for today</div>'
+    +'<div id="snack-pick-list" style="display:flex;flex-direction:column;gap:6px;margin-bottom:16px;">';
+  SNACK_OPTIONS.forEach(function(sn){
+    var sel=!!selIds[sn.id];
+    html+='<div class="snack-pick-opt'+(sel?' spo-sel':'')+'" data-sid="'+sn.id+'" data-sname="'+sn.name+'" data-skcal="'+sn.kcal+'" data-sprot="'+sn.protein+'">'
+      +'<span class="swap-opt-name">'+sn.name+'</span>'
+      +'<span class="swap-opt-mac">'+sn.protein+'g · '+sn.kcal+' kcal</span>'
+      +'<span class="spo-chk">'+(sel?'&#10003;':'')+'</span>'
+      +'</div>';
+  });
+  html+='</div><button class="btn primary" id="saveSnackSel" style="width:100%;margin-top:4px;">Save selection</button>';
+  document.getElementById('pbody').innerHTML=html;
+  document.querySelectorAll('.snack-pick-opt').forEach(function(el){
+    el.addEventListener('click',function(){
+      el.classList.toggle('spo-sel');
+      el.querySelector('.spo-chk').innerHTML=el.classList.contains('spo-sel')?'&#10003;':'';
+    });
+  });
+  var saveBtn=document.getElementById('saveSnackSel');
+  if(saveBtn){
+    saveBtn.addEventListener('click',function(){
+      var selected=[];
+      document.querySelectorAll('.snack-pick-opt.spo-sel').forEach(function(el){
+        selected.push({id:el.getAttribute('data-sid'),name:el.getAttribute('data-sname'),
+          kcal:parseInt(el.getAttribute('data-skcal'))||0,protein:parseInt(el.getAttribute('data-sprot'))||0});
+      });
+      var W2=APP.weeks[wk];
+      if(W2&&W2.meals&&W2.meals[dk]){
+        W2.meals[dk].snacks=selected;
+        delete W2.meals[dk].snack;
+      }
+      saveApp();closePanel();renderPlanner();
+    });
+  }
+  openPanel();
+}
+
 function openMealPanel(data,wk,dk){
+  if(data.mt==='snack'){openSnackPicker(dk);return;}
   openSwapId=null;
   var isFav=!!APP.favorites[data.id],isDis=!!APP.dislikes[data.id];
   var isCustom=data.fkey==='custom',isLogged=data.fkey==='logged';
@@ -2124,7 +2195,8 @@ function renderAddMealForm(){
       +'<div style="height:1px;background:var(--bd);margin:14px 0;"></div>';
   }
     +'<div style="font-size:11px;color:var(--mu);margin-bottom:8px;">Enter "150g", "1 tbsp" etc. Macros estimated automatically.</div>'
-  document.getElementById('pbody').innerHTML = portionHtml
+  var nameHtml='<div class="fi" style="margin-bottom:12px;"><label style="font-weight:700;">Meal name</label><input type="text" id="cmName" placeholder="e.g. Tuna salad, Post-gym bowl..." style="width:100%;"></div>';
+  document.getElementById('pbody').innerHTML = nameHtml+portionHtml
     +'<div id="ingBld">'+ingRows+'</div>'
     +'<button class="add-ing" onclick="addIng()">+ Add ingredient</button>'
     +'<div class="macro-prev" id="mprev"><div class="mp-item"><div class="mp-val">'+mc.kcal+'</div><div class="mp-lbl">kcal</div></div>'
