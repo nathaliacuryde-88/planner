@@ -982,6 +982,69 @@ var MDB = {
   'coconut oil':{p:0,k:892},'oleo coco':{p:0,k:892},'ghee':{p:0,k:900},
   'avocado oil':{p:0,k:884},'lard':{p:0,k:898},'banha':{p:0,k:898},
 };
+// Larger English-only ingredient database (per 100g). Merged into MDB and
+// used to build the autocomplete list shown to the user.
+var ING_EN = {
+  // Fish & seafood
+  'haddock':{p:19,k:90},'pollock':{p:19,k:92},'hake':{p:18,k:87},'halibut':{p:21,k:111},
+  'sardines':{p:25,k:208},'anchovies':{p:29,k:210},'herring':{p:18,k:158},
+  'tilapia':{p:26,k:96},'swordfish':{p:20,k:144},'caviar':{p:25,k:264},
+  'lobster':{p:19,k:89},'scallops':{p:21,k:111},'oysters':{p:9,k:81},
+  // Eggs & dairy
+  'egg yolk':{p:16,k:322},'boiled egg':{p:13,k:155},'milk':{p:3,k:42},
+  'whole milk':{p:3,k:61},'skimmed milk':{p:3,k:35},'almond milk':{p:1,k:17},
+  'oat milk':{p:1,k:46},'kefir':{p:3,k:41},'mascarpone':{p:5,k:429},
+  'gruyere':{p:30,k:413},'gouda':{p:25,k:356},'emmental':{p:28,k:380},
+  'blue cheese':{p:21,k:353},'provolone':{p:26,k:351},'quark':{p:12,k:68},
+  // Plant proteins & legumes
+  'seitan':{p:25,k:143},'soybeans':{p:17,k:173},'split peas':{p:8,k:118},
+  'butter beans':{p:7,k:115},'pinto beans':{p:9,k:143},'cannellini beans':{p:9,k:139},
+  'falafel':{p:13,k:333},'tofu scramble':{p:9,k:120},'veggie burger':{p:18,k:200},
+  'vegetable protein':{p:16,k:140},
+  // Grains & carbs
+  'brown rice':{p:3,k:123},'basmati rice':{p:3,k:130},'wild rice':{p:4,k:101},
+  'rice noodles':{p:2,k:109},'egg noodles':{p:5,k:138},'soba noodles':{p:5,k:99},
+  'barley':{p:2,k:123},'farro':{p:6,k:130},'spelt':{p:6,k:127},'freekeh':{p:5,k:118},
+  'buckwheat':{p:5,k:92},'rye bread':{p:9,k:259},'bagel':{p:11,k:250},
+  'english muffin':{p:8,k:235},'crackers':{p:9,k:430},'rice cakes':{p:8,k:387},
+  'oatcakes':{p:10,k:440},'cornflakes':{p:7,k:357},'muesli':{p:10,k:362},
+  'gnocchi':{p:4,k:160},'risotto rice':{p:7,k:350},
+  // Vegetables
+  'cauliflower':{p:2,k:25},'brussels sprouts':{p:3,k:43},'green peas':{p:5,k:81},
+  'lettuce':{p:1,k:15},'arugula':{p:3,k:25},'swiss chard':{p:2,k:19},
+  'collard greens':{p:3,k:32},'okra':{p:2,k:33},'aubergine':{p:1,k:25},
+  'zucchini':{p:1,k:17},'squash':{p:1,k:45},'turnip greens':{p:1,k:32},
+  'edamame beans':{p:11,k:121},'bamboo shoots':{p:2,k:27},'bean sprouts':{p:3,k:30},
+  'snap peas':{p:3,k:42},'red cabbage':{p:1,k:31},'kohlrabi':{p:2,k:27},
+  'jalapeno':{p:1,k:29},'sweetcorn':{p:3,k:86},
+  // Fruits
+  'watermelon':{p:1,k:30},'melon':{p:1,k:34},'cantaloupe':{p:1,k:34},
+  'cherries':{p:1,k:63},'apricot':{p:1,k:48},'nectarine':{p:1,k:44},
+  'pomegranate':{p:2,k:83},'passion fruit':{p:2,k:97},'lychee':{p:1,k:66},
+  'guava':{p:3,k:68},'coconut':{p:3,k:354},'lime':{p:1,k:30},'lemon':{p:1,k:29},
+  'currants':{p:1,k:56},'gooseberry':{p:1,k:44},'prunes':{p:2,k:240},
+  'dried figs':{p:3,k:249},'dates medjool':{p:2,k:277},
+  // Nuts, seeds & spreads
+  'almond butter':{p:21,k:614},'cashew butter':{p:18,k:587},'brazil nuts':{p:14,k:659},
+  'flax seeds':{p:18,k:534},'sesame seeds':{p:18,k:573},'poppy seeds':{p:18,k:525},
+  'nutella':{p:6,k:539},'jam':{p:0,k:278},'honey':{p:0,k:304},'maple syrup':{p:0,k:260},
+  'agave syrup':{p:0,k:310},
+  // Prepared / snacks
+  'protein bar':{p:32,k:350},'granola bar':{p:7,k:471},'dark chocolate':{p:8,k:546},
+  'milk chocolate':{p:8,k:535},'popcorn':{p:11,k:387},'pretzels':{p:10,k:380},
+  'tortilla chips':{p:7,k:489},'potato chips':{p:7,k:536},'crisps':{p:7,k:536},
+  'soy crisps':{p:23,k:439},'dried seaweed':{p:6,k:35},'nori':{p:6,k:35},
+  'pickles':{p:1,k:11},'olives':{p:1,k:115},'sun dried tomatoes':{p:5,k:258},
+  // Condiments & sauces
+  'worcestershire sauce':{p:1,k:78},'teriyaki sauce':{p:3,k:89},'bbq sauce':{p:1,k:172},
+  'mustard':{p:7,k:66},'horseradish':{p:1,k:48},'wasabi':{p:4,k:292},
+  'coconut cream':{p:2,k:330},'creme fraiche':{p:2,k:292},'sour cream':{p:2,k:198},
+  // Drinks
+  'almond latte':{p:1,k:40},'cappuccino':{p:3,k:46},'smoothie':{p:2,k:60},
+  'coconut water':{p:0,k:19},'sparkling water':{p:0,k:0},'diet soda':{p:0,k:1},
+  'soda':{p:0,k:42},'lemonade':{p:0,k:40}
+};
+for(var _ek in ING_EN){if(ING_EN.hasOwnProperty(_ek)&&!MDB[_ek])MDB[_ek]=ING_EN[_ek];}
 // Unit weights for natural language amounts like "1 egg", "half apple"
 var UNIT_WEIGHTS = {
   'egg':60,'apple':180,'banana':120,'orange':130,'lemon':80,'lime':60,
@@ -1191,6 +1254,9 @@ var APP = loadApp() || {
 if(!APP.shopRemoved)APP.shopRemoved={};
 if(!APP.shopChecked)APP.shopChecked={};
 if(!APP.shopQty)APP.shopQty={};
+// User-added ingredients persist forever and merge into the macro database
+if(!APP.customIngredients)APP.customIngredients={};
+for(var _ck in APP.customIngredients){if(APP.customIngredients.hasOwnProperty(_ck))MDB[_ck]=APP.customIngredients[_ck];}
 
 function ensureWk(wk) {
   if (!APP.weeks[wk]) {
@@ -1317,9 +1383,27 @@ function lookupMacroKey(name) {
 function titleCaseWords(s){
   return (s||'').replace(/\b\w/g,function(c){return c.toUpperCase();});
 }
+// Portuguese alias keys hidden from the English autocomplete list
+var PT_ALIASES={'camarao':1,'atum':1,'carne veggie':1,'batata doce':1,'bacalhau':1,
+  'robalo':1,'dourada':1,'carapau':1,'trucha':1,'polvo':1,'lulas':1,'ameijoas':1,
+  'gambas':1,'caranguejo':1,'mexilhao':1,'iogurte grego':1,'queijo cabra':1,
+  'manteiga':1,'nata':1,'feijao preto':1,'feijao vermelho':1,'feijao branco':1,
+  'ervilhas':1,'leite soja':1,'amendoim':1,'aveia':1,'pao':1,'massa':1,'milho':1,
+  'farinha':1,'abobora':1,'beterraba':1,'nabo':1,'alho frances':1,'funcho':1,
+  'espargos':1,'feijao verde':1,'couve':1,'aipo':1,'cebola':1,'manga':1,'ananás':1,
+  'papaia':1,'morango':1,'framboesa':1,'amora':1,'mirtilo':1,'uvas':1,'laranja':1,
+  'pomelo':1,'pessego':1,'ameixa':1,'pera':1,'figo':1,'tamara':1,'passas':1,
+  'molho tomate':1,'maionese':1,'pasta de caril':1,'molho peixe':1,'alho':1,
+  'gengibre':1,'curcuma':1,'coentros':1,'salsa':1,'manjericao':1,'tomilho':1,
+  'alecrim':1,'hortela':1,'piri piri':1,'canela':1,'pimenta':1,'agua':1,
+  'cha verde':1,'cafe':1,'caldo de ossos':1,'oleo coco':1,'banha':1};
 function ingDatalistHtml(){
-  var keys=Object.keys(MDB),opts='';
-  for(var i=0;i<keys.length;i++){opts+='<option value="'+titleCaseWords(keys[i])+'">';}
+  var seen={},names=[];
+  for(var k in MDB){if(!MDB.hasOwnProperty(k))continue;if(PT_ALIASES[k])continue;
+    var t=titleCaseWords(k);if(seen[t])continue;seen[t]=1;names.push(t);}
+  names.sort();
+  var opts='';
+  for(var i=0;i<names.length;i++){opts+='<option value="'+names[i]+'">';}
   return '<datalist id="ingNamesList">'+opts+'</datalist>';
 }
 function ingRecBadge(name){
@@ -2236,38 +2320,50 @@ function renderAddMealForm(){
         +'<div class="rec-pills"><span class="rec-pill">'+r.kcal+' kcal</span><span class="rec-pill">'+r.protein+'g prot</span></div></div>';
     });
   }
-  // portion helper for unplanned
-  var portionHtml='';
+  var nameHtml='<div class="fi" style="margin-bottom:12px;"><label style="font-weight:700;">Meal name</label><input type="text" id="cmName" placeholder="e.g. Tuna salad, Post-gym bowl..." style="width:100%;"></div>';
+  // Mini form to add a brand-new ingredient to the permanent list
+  var newIngHtml='<div class="new-ing-box">'
+    +'<button type="button" class="add-ing" id="toggleNewIng" style="margin-top:10px;">+ Ingredient not in the list?</button>'
+    +'<div id="newIngForm" style="display:none;margin-top:8px;padding:10px;background:var(--sf);border:1.5px solid var(--bd);border-radius:12px;">'
+    +'<div style="font-size:11px;color:var(--mu);margin-bottom:6px;">Add it once with values per 100g — it’s saved to your list forever.</div>'
+    +'<div class="fi" style="margin-bottom:6px;"><label>Ingredient name</label><input type="text" id="newIngName" placeholder="e.g. Protein granola"></div>'
+    +'<div class="fi-row">'
+    +'<div class="fi"><label>Kcal / 100g</label><input type="number" id="newIngKcal" min="0" placeholder="e.g. 380"></div>'
+    +'<div class="fi"><label>Protein / 100g</label><input type="number" id="newIngProt" min="0" placeholder="e.g. 20"></div>'
+    +'</div>'
+    +'<button class="btn primary sm" id="saveNewIngBtn" style="width:100%;margin-top:6px;">Save to my list</button>'
+    +'</div></div>';
+  // Portion size estimate (unplanned only) — the 3 tap cards
+  var sizeHtml='';
   if(!cIsPlanned){
-    portionHtml='<div class="p-sec">Quick log</div>'
-      +'<div class="fi-row">'
-      +'<div class="fi" style="flex:2"><label>Product / food</label><input type="text" id="portionName" list="ingNamesList" placeholder="e.g. Chicken, Pasta, Apple" oninput="updatePortionRec()"><div id="portionRec"></div></div>'
-      +'<div class="fi" style="flex:1"><label>Amount</label><input type="text" id="portionAmt" placeholder="150g"></div>'
-      +'<div class="fi" style="flex:1"><label>Kcal (override)</label><input type="number" id="portionKcal" min="0" placeholder="auto"></div>'
-      +'</div>'
-      +'<button class="btn primary" id="logExactBtn" style="width:100%;margin:8px 0 4px;">+ Log this item</button>'
-      +'<div style="font-size:11px;color:var(--mu);margin-bottom:8px;">Or tap a portion size estimate:</div>'
+    sizeHtml='<div style="display:flex;align-items:center;gap:10px;margin:18px 0 10px;">'
+      +'<div style="flex:1;height:1px;background:var(--bd);"></div>'
+      +'<span style="font-size:12px;font-weight:800;color:var(--mu);">OR</span>'
+      +'<div style="flex:1;height:1px;background:var(--bd);"></div></div>'
+      +'<div class="p-sec">Tap a portion size estimate</div>'
       +'<div class="portion-btns" id="portionBtnsRow">'
       +'<div class="portion-btn" id="psm"><div class="pb-size">&#129371;</div><div class="pb-lbl">Small</div><div style="font-size:10px;color:var(--mu)">~250 kcal</div></div>'
       +'<div class="portion-btn" id="pmd"><div class="pb-size">&#127860;</div><div class="pb-lbl">Medium</div><div style="font-size:10px;color:var(--mu)">~400 kcal</div></div>'
       +'<div class="portion-btn" id="plg"><div class="pb-size">&#127869;</div><div class="pb-lbl">Large</div><div style="font-size:10px;color:var(--mu)">~600 kcal</div></div>'
-      +'</div>'
-      +'<div style="height:1px;background:var(--bd);margin:14px 0;"></div>';
+      +'</div>';
   }
-    +'<div style="font-size:11px;color:var(--mu);margin-bottom:8px;">Enter "150g", "1 tbsp" etc. Macros estimated automatically.</div>'
-  var nameHtml='<div class="fi" style="margin-bottom:12px;"><label style="font-weight:700;">Meal name</label><input type="text" id="cmName" placeholder="e.g. Tuna salad, Post-gym bowl..." style="width:100%;"></div>';
-  document.getElementById('pbody').innerHTML = ingDatalistHtml()+nameHtml+portionHtml
+  document.getElementById('pbody').innerHTML = ingDatalistHtml()+nameHtml
+    +'<div class="p-sec">Ingredients</div>'
+    +'<div style="font-size:11px;color:var(--mu);margin-bottom:8px;">Type to search the list. Enter "150g", "1 tbsp" etc — macros are estimated automatically.</div>'
     +'<div id="ingBld">'+ingRows+'</div>'
     +'<button class="add-ing" onclick="addIng()">+ Add ingredient</button>'
+    +newIngHtml
     +'<div class="macro-prev" id="mprev"><div class="mp-item"><div class="mp-val">'+mc.kcal+'</div><div class="mp-lbl">kcal</div></div>'
     +'<div class="mp-item"><div class="mp-val">'+mc.protein+'g</div><div class="mp-lbl">protein</div></div></div>'
-    +'</div>'
-    +'<div class="fi"><label>Notes (optional)</label><textarea id="cmNotes" placeholder="Cooking notes..."></textarea></div>'
     +'<button class="btn primary" style="width:100%;margin-top:12px;" onclick="saveCustomMeal()">Save</button>'
+    +sizeHtml
     +recOpts;
+  // Wire new-ingredient form
+  var tgl=document.getElementById('toggleNewIng');
+  if(tgl)tgl.addEventListener('click',function(){var f=document.getElementById('newIngForm');if(f)f.style.display=f.style.display==='none'?'block':'none';});
+  var saveNewBtn=document.getElementById('saveNewIngBtn');
+  if(saveNewBtn)saveNewBtn.addEventListener('click',saveNewIngredient);
   // Wire portion buttons via DOM (avoids inline onclick issues in some environments)
-  var logExact = document.getElementById('logExactBtn');
-  if(logExact) logExact.addEventListener('click', function(){logByPortion('exact');});
   var pBtns = document.getElementById('portionBtnsRow');
   if(pBtns){
     var psizes = ['small','medium','large'];
@@ -2276,6 +2372,26 @@ function renderAddMealForm(){
       if(btn)(function(sz){btn.addEventListener('click',function(){logByPortion(sz);});})(psizes[idx]);
     });
   }
+}
+// Save a user-defined ingredient permanently into the macro database
+function saveNewIngredient(){
+  var nameEl=document.getElementById('newIngName'),kEl=document.getElementById('newIngKcal'),pEl=document.getElementById('newIngProt');
+  var name=nameEl&&nameEl.value.trim();
+  var kcal=parseFloat(kEl&&kEl.value);
+  var prot=parseFloat(pEl&&pEl.value);
+  if(!name){alert('Enter an ingredient name.');return;}
+  if(isNaN(kcal)||kcal<0){alert('Enter kcal per 100g.');return;}
+  if(isNaN(prot)||prot<0)prot=0;
+  var key=name.toLowerCase();
+  if(!APP.customIngredients)APP.customIngredients={};
+  APP.customIngredients[key]={p:prot,k:kcal};
+  MDB[key]={p:prot,k:kcal};
+  saveApp();
+  // Drop it into the first empty ingredient row (or add one), then re-render
+  var placed=false;
+  for(var i=0;i<cIngs.length;i++){if(!cIngs[i].name){cIngs[i].name=titleCaseWords(key);placed=true;break;}}
+  if(!placed)cIngs.push({name:titleCaseWords(key),amount:'100g'});
+  renderAddMealForm();
 }
 function addIng(){cIngs.push({name:'',amount:'100g'});renderAddMealForm();}
 function removeIng(i){cIngs.splice(i,1);if(!cIngs.length)cIngs=[{name:'',amount:'100g'}];renderAddMealForm();}
@@ -2305,18 +2421,14 @@ function logDrink(name, kcal, protein){
   saveApp(); closePanel(); renderPlanner();
 }
 function logByPortion(size){
-  var name=(document.getElementById('portionName')&&document.getElementById('portionName').value)||'Custom meal';
-  var amtStr=(document.getElementById('portionAmt')&&document.getElementById('portionAmt').value)||'';
-  var manualKcal=parseFloat(document.getElementById('portionKcal')&&document.getElementById('portionKcal').value)||0;
-  var portions={small:{kcal:250,protein:15},medium:{kcal:400,protein:22},large:{kcal:600,protein:30},exact:{kcal:0,protein:0}};
+  var name=(document.getElementById('cmName')&&document.getElementById('cmName').value.trim())||'Quick meal';
+  var portions={small:{kcal:250,protein:15},medium:{kcal:400,protein:22},large:{kcal:600,protein:30}};
   var p=portions[size]||{kcal:0,protein:0};
   var dk=document.getElementById('cmDk')&&document.getElementById('cmDk').value||cDk||'Mon';
   var time=document.getElementById('cmTime')&&document.getElementById('cmTime').value||'12:00';
-  var kcal=manualKcal||p.kcal, prot=p.protein;
-  // Try to estimate macros from ingredient if name+amount given
-  if(amtStr&&name&&!manualKcal){var mc2=calcMacros([[name,amtStr]]);if(mc2&&mc2.kcal>0){kcal=mc2.kcal;prot=mc2.protein;}}
-  if(!kcal&&!amtStr)return; // nothing to log
-  var label=size==="exact"?name:(name+" ("+size+" portion)");
+  var kcal=p.kcal, prot=p.protein;
+  if(!kcal)return;
+  var label=name+" ("+size+" portion)";
   var wk=APP.currentWeek;ensureWk(wk);
   if(!APP.weeks[wk].loggedMeals)APP.weeks[wk].loggedMeals={};
   if(!APP.weeks[wk].loggedMeals[dk])APP.weeks[wk].loggedMeals[dk]=[];
@@ -2340,12 +2452,11 @@ function saveCustomMeal(){
   var name=document.getElementById('cmName')&&document.getElementById('cmName').value||'Custom meal';
   var time=document.getElementById('cmTime')&&document.getElementById('cmTime').value||'12:00';
   var type=document.getElementById('cmType')&&document.getElementById('cmType').value||'other';
-  var notes=document.getElementById('cmNotes')&&document.getElementById('cmNotes').value||'';
   var mc=calcMacros(cIngs.map(function(i){return [i.name,i.amount];}));
   var wk=APP.currentWeek;ensureWk(wk);
   var entry={id:(cIsPlanned?'cx':'lm')+Date.now(),name:name,time:time,mt:type,protein:mc.protein,kcal:mc.kcal,
     ingredients:cIngs.filter(function(i){return i.name;}).map(function(i){return [i.name,i.amount];}),
-    steps:notes?[notes]:[]};
+    steps:[]};
   if(cIsPlanned){
     if(!APP.weeks[wk].customEvs)APP.weeks[wk].customEvs={};
     if(!APP.weeks[wk].customEvs[dk])APP.weeks[wk].customEvs[dk]=[];
