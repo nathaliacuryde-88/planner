@@ -1187,7 +1187,7 @@ var PREF_OPTIONS = {
   protein:[{id:'p_fish',l:'White fish'},{id:'p_shrimp',l:'Shrimp'},{id:'p_salmon',l:'Salmon'},{id:'p_tuna',l:'Tuna'},{id:'p_eggs',l:'Eggs'},{id:'p_tofu',l:'Tofu'},{id:'p_cottage',l:'Cottage'},{id:'p_halloumi',l:'Halloumi'}],
   veg:[{id:'v_avo',l:'Avocado'},{id:'v_cuc',l:'Cucumber'},{id:'v_mush',l:'Mushrooms'},{id:'v_broc',l:'Broccoli'},{id:'v_courg',l:'Courgette'},{id:'v_rad',l:'Radish'},{id:'v_eda',l:'Edamame'},{id:'v_spin',l:'Spinach'},{id:'v_egg',l:'Eggplant'},{id:'v_sp',l:'Sweet potato'}],
   avoid:[{id:'a_gluten',l:'Gluten'},{id:'a_dairy',l:'Dairy'},{id:'a_nuts',l:'Nuts'},{id:'a_spicy',l:'Spicy'},{id:'a_raw',l:'Raw fish'},{id:'a_lentils',l:'Lentils'},{id:'a_chicken',l:'Chicken/Red meat'}],
-  style:[{id:'s_quick',l:'Quick meals'},{id:'s_batch',l:'Batch cook'},{id:'s_nocook',l:'No-cook'},{id:'s_grilled',l:'Grilled'},{id:'s_baked',l:'Oven-baked'},{id:'s_stir',l:'Stir-fry'},{id:'s_salad',l:'Raw salads'}],
+  style:[{id:'s_quick',l:'Quick meals'},{id:'s_batch',l:'Batch cook'},{id:'s_nocook',l:'No-cook'},{id:'s_grilled',l:'Grilled'},{id:'s_baked',l:'Oven-baked'},{id:'s_stir',l:'Stir-fry'},{id:'s_salad',l:'Raw salads'},{id:'s_airfryer',l:'Air fryer'}],
 };
 var CAT_MAP = {cuisine:'tagCuisine',protein:'tagProtein',veg:'tagVeg',avoid:'tagAvoid',style:'tagCookStyle'};
 
@@ -1921,14 +1921,26 @@ function showCtxMenu(e,wk,dk,ev){
   var isRemovable=ev.data.fkey==='custom'||ev.data.fkey==='logged'||ev.data.fkey==='extra_ex';
   var isMeal=ev.data.fkey==='meal';
   var html='';
-  if(isMeal)html+='<div class="ctx-item" onclick="closeCtxMenu();regenMeal(\''+wk+'\',\''+dk+'\',\''+ev.data.mt+'\')">&#8635; New recipe</div>';
-  html+='<div class="ctx-item" onclick="closeCtxMenu();openTimePicker({clientX:'+Math.min(e.clientX||100,window.innerWidth-220)+',clientY:'+Math.min(e.clientY||100,window.innerHeight-300)+',stopPropagation:function(){}},\''+wk+'\',\''+dk+'\',\''+ev.id+'\',\''+ev.time+'\')">&#9200; Change time</div>';
-  if(isRemovable)html+='<div class="ctx-item danger" onclick="closeCtxMenu();deleteEvent(\''+wk+'\',\''+dk+'\',\''+ev.data.fkey+'\',\''+ev.data.cid+'\')">&#128465; Delete</div>';
+  if(isMeal)html+='<div class="ctx-item" id="ctxNewRecipe">&#8635; New recipe</div>';
+  html+='<div class="ctx-item" id="ctxChangeTime">&#9200; Change time</div>';
+  if(isRemovable)html+='<div class="ctx-item danger" id="ctxDelete">&#128465; Delete</div>';
   menu.innerHTML=html;
   menu.style.display='block';
   var x=Math.min(e.clientX||100,window.innerWidth-170);
   var y=Math.min(e.clientY||100,window.innerHeight-120);
   menu.style.left=x+'px';menu.style.top=y+'px';
+  var ctxClientX=Math.min(e.clientX||100,window.innerWidth-220);
+  var ctxClientY=Math.min(e.clientY||100,window.innerHeight-300);
+  if(isMeal){
+    var ctxNewRecipe=document.getElementById('ctxNewRecipe');
+    if(ctxNewRecipe)ctxNewRecipe.addEventListener('click',function(){closeCtxMenu();regenMeal(wk,dk,ev.data.mt);});
+  }
+  var ctxChangeTime=document.getElementById('ctxChangeTime');
+  if(ctxChangeTime)ctxChangeTime.addEventListener('click',function(){closeCtxMenu();openTimePicker({clientX:ctxClientX,clientY:ctxClientY,stopPropagation:function(){}},wk,dk,ev.id,ev.time);});
+  if(isRemovable){
+    var ctxDelete=document.getElementById('ctxDelete');
+    if(ctxDelete)ctxDelete.addEventListener('click',function(){closeCtxMenu();deleteEvent(wk,dk,ev.data.fkey,ev.data.cid);});
+  }
   setTimeout(function(){
     function onOut(ev){
       var m=document.getElementById('ctxMenu');
@@ -2065,18 +2077,31 @@ function openMealPanel(data,wk,dk){
   }
   if(isCustom||isLogged)html+='<button class="p-act dis" id="del_btn_panel">&#128465; Delete</button>';
   html+='</div>';
-  // show recipe picker if we have saved recipes
-  if(APP.recipes&&APP.recipes.length){
-    html+='<div class="p-sec">Use a saved recipe for this meal</div>';
-    html+='<div style="display:flex;flex-direction:column;gap:6px;margin-bottom:14px;">';
-    APP.recipes.forEach(function(r){
-      html+='<div class="rec-card" data-rid="'+r.id+'" data-wk="'+wk+'" data-dk="'+dk+'" data-mt="'+(data.mt||'')+'" data-action="userecipe" style="padding:8px 12px;cursor:pointer;">'
+  // swap for any other recipe (app-generated meals or user's saved recipes)
+  if((data.mt==='lunch'||data.mt==='dinner')&&!isCustom&&!isLogged){
+    var swapPool=(data.mt==='lunch')?LUNCHES.concat(LUNCHES_LIGHT):DINNERS.concat(DINNERS_LIGHT);
+    var swapCards='';
+    swapPool.forEach(function(r){
+      if(r.id===data.id)return;
+      swapCards+='<div class="rec-card" data-src="pool" data-rid="'+r.id+'" data-wk="'+wk+'" data-dk="'+dk+'" data-mt="'+data.mt+'" data-action="swaprecipe" style="padding:8px 12px;cursor:pointer;">'
         +'<div style="display:flex;justify-content:space-between;align-items:center;">'
         +'<span style="font-size:12px;font-weight:600;">'+r.name+'</span>'
         +'<span class="rec-pill">'+r.kcal+' kcal &nbsp; '+r.protein+'g prot</span>'
         +'</div></div>';
     });
-    html+='</div>';
+    if(APP.recipes&&APP.recipes.length){
+      APP.recipes.forEach(function(r){
+        swapCards+='<div class="rec-card" data-src="user" data-rid="'+r.id+'" data-wk="'+wk+'" data-dk="'+dk+'" data-mt="'+data.mt+'" data-action="swaprecipe" style="padding:8px 12px;cursor:pointer;">'
+          +'<div style="display:flex;justify-content:space-between;align-items:center;">'
+          +'<span style="font-size:12px;font-weight:600;">'+r.name+' <span style="color:var(--mu);font-weight:400;">(yours)</span></span>'
+          +'<span class="rec-pill">'+r.kcal+' kcal &nbsp; '+r.protein+'g prot</span>'
+          +'</div></div>';
+      });
+    }
+    if(swapCards){
+      html+='<div class="p-sec">Swap for another recipe</div>';
+      html+='<div style="display:flex;flex-direction:column;gap:6px;margin-bottom:14px;max-height:240px;overflow-y:auto;">'+swapCards+'</div>';
+    }
   }
   var dayTgt=getDayTarget(wk,dk);
   var over=dayKcal-dayTgt;
@@ -2163,23 +2188,35 @@ function openMealPanel(data,wk,dk){
         el.getAttribute('data-dswwk'),el.getAttribute('data-dswdk'),el.getAttribute('data-dswmt'));
     });
   });
-  // Wire recipe card clicks
-  document.querySelectorAll('[data-action="userecipe"]').forEach(function(el){
+  // Wire recipe swap card clicks
+  document.querySelectorAll('[data-action="swaprecipe"]').forEach(function(el){
     el.addEventListener('click',function(){
-      applyRecipeToMeal(el.getAttribute('data-rid'),el.getAttribute('data-wk'),el.getAttribute('data-dk'),el.getAttribute('data-mt'));
+      swapMealRecipe(el.getAttribute('data-src'),el.getAttribute('data-rid'),el.getAttribute('data-wk'),el.getAttribute('data-dk'),el.getAttribute('data-mt'));
     });
   });
 }
 
-function applyRecipeToMeal(rid,wk,dk,mt){
-  var rec=APP.recipes&&APP.recipes.find(function(r){return r.id===rid;});
-  if(!rec||!mt||mt==='snack')return;
+function swapMealRecipe(src,rid,wk,dk,mt){
+  if(!mt||mt==='snack')return;
   var W=APP.weeks[wk];if(!W)return;
-  // replace the meal with recipe data
-  var newMeal={id:'rx_'+rec.id,name:rec.name,kcal:rec.kcal,protein:rec.protein,
-    ingredients:rec.ingredients||[],steps:rec.steps||[]};
+  var rec;
+  if(src==='user'){
+    rec=APP.recipes&&APP.recipes.find(function(r){return r.id===rid;});
+  } else {
+    var pool=(mt==='lunch')?LUNCHES.concat(LUNCHES_LIGHT):DINNERS.concat(DINNERS_LIGHT);
+    rec=pool.find(function(r){return r.id===rid;});
+  }
+  if(!rec)return;
+  var mc=calcMacros(rec.ingredients||[]);
+  var newMeal={id:(src==='user'?'rx_'+rec.id:rec.id),name:rec.name,
+    kcal:mc.kcal||rec.kcal,protein:mc.protein||rec.protein,
+    ingredients:rec.ingredients||[],steps:rec.steps||[],mt:mt,fkey:'meal'};
+  if(!W.mealOverrides)W.mealOverrides={};
+  if(!W.mealOverrides[dk])W.mealOverrides[dk]={};
+  W.mealOverrides[dk][mt]=newMeal;
   W.meals[dk][mt]=newMeal;
-  saveApp();closePanel();renderPlanner();
+  saveApp();renderPlanner();
+  openMealPanel(newMeal,wk,dk);
 }
 
 function applySwap(mid,ii,newIng,amt,wk,dk,mt){
@@ -2320,7 +2357,8 @@ function renderAddMealForm(){
         +'<div class="rec-pills"><span class="rec-pill">'+r.kcal+' kcal</span><span class="rec-pill">'+r.protein+'g prot</span></div></div>';
     });
   }
-  var nameHtml='<div class="fi" style="margin-bottom:12px;"><label style="font-weight:700;">Meal name</label><input type="text" id="cmName" placeholder="e.g. Tuna salad, Post-gym bowl..." style="width:100%;"></div>';
+  var nameHtml='<div class="fi" style="margin-bottom:12px;"><label style="font-weight:700;">Meal name</label><input type="text" id="cmName" placeholder="e.g. Tuna salad, Post-gym bowl..." style="width:100%;"></div>'
+    +'<div class="fi-row" style="margin-bottom:12px;"><div class="fi"><label>Day</label><select id="cmDk">'+dkOpts+'</select></div><div class="fi"><label>Time</label><select id="cmTime">'+tOpts+'</select></div></div>';
   // Mini form to add a brand-new ingredient to the permanent list
   var newIngHtml='<div class="new-ing-box">'
     +'<button type="button" class="add-ing" id="toggleNewIng" style="margin-top:10px;">+ Ingredient not in the list?</button>'
