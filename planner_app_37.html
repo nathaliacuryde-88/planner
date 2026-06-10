@@ -1378,12 +1378,12 @@ function buildTimeline(wk,dk) {
     }
   } else if(ex==='recovery'){
     if(L)add('12:00','lunch',mealEv(L,'Lunch','lunch',dk));
-    if(SN)add('16:30','snack',snackEv(SN,dk));
+    SNS.forEach(function(sn){add('16:30','snack_'+sn.id,snackEv(sn,dk));});
     add('17:00','workout',{cls:'c-walk',lbl:'Recovery',name:'Walk + stretches',detail:'20-35 min - ~'+KCAL_BURNED.recovery+' kcal burned',protein:0,kcal:0,burned:KCAL_BURNED.recovery,fkey:'walk'});
     if(D)add('19:30','dinner',mealEv(D,'Dinner','dinner',dk));
   } else {
     if(L)add('12:00','lunch',mealEv(L,'Lunch','lunch',dk));
-    if(SN)add('16:30','snack',snackEv(SN,dk));
+    SNS.forEach(function(sn){add('16:30','snack_'+sn.id,snackEv(sn,dk));});
     if(D)add('19:30','dinner',mealEv(D,'Dinner','dinner',dk));
   }
   if(isWine)add('21:00','wine',{cls:'c-wine',lbl:'Drinks',name:'Drinks',detail:'tap to log drinks',protein:0,kcal:330,fkey:'drinks_log',dk:dk});
