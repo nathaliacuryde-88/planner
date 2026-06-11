@@ -111,6 +111,17 @@ body{
   color:var(--tx);
   border-bottom-color:var(--gym);
 }
+.nav-sync{
+  flex:0 0 auto;
+  padding:13px 12px 11px;
+  font-size:16px;
+  cursor:pointer;
+  display:flex;
+  align-items:center;
+  opacity:.55;
+  transition:opacity .15s;
+}
+.nav-sync.synced{opacity:1;}
 
 /* ── PAGES ─────────────────────────────────────────────────────────────── */
 .pages{flex:1;overflow:hidden;position:relative;}
@@ -675,6 +686,7 @@ canvas#wChart{width:100%;height:155px;display:block;margin-bottom:14px;}
   <div class="nav-tab" onclick="showPage('shopping')">&#128722; Shopping</div>
   <div class="nav-tab" onclick="showPage('recipes')">&#128218; Recipes</div>
   <div class="nav-tab" onclick="showPage('prefs')">&#10084; Tastes</div>
+  <div class="nav-sync" id="navSync" onclick="openSyncPanel()" title="Sign in to sync">&#9729;&#65039;</div>
 </div>
 <div class="pages">
 
@@ -848,6 +860,7 @@ canvas#wChart{width:100%;height:155px;display:block;margin-bottom:14px;}
 
 <div id="ctxMenu" class="ctx-menu" style="display:none;"></div>
 <div id="timePicker" class="time-picker" style="display:none;"></div>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 <script>
 // ── CONSTANTS & DATA ────────────────────────────────────────────────────
 // Calories burned during exercise
@@ -1271,7 +1284,127 @@ function dayDate(wk,dk) {
   return d;
 }
 function loadApp() { try{return JSON.parse(localStorage.getItem('wp_v7')||'null');}catch(e){return null;} }
-function saveApp() { localStorage.setItem('wp_v7',JSON.stringify(APP)); }
+function saveApp() { localStorage.setItem('wp_v7',JSON.stringify(APP)); pushToCloud(); }
+
+// ── CLOUD SYNC ──────────────────────────────────────────────────────────
+var SUPABASE_URL = 'https://pveomdlyyswlzuhxetah.supabase.co';
+var SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InB2ZW9tZGx5eXN3bHp1aHhldGFoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYyNDUyMzgsImV4cCI6MjA5MTgyMTIzOH0.-ZN1DDK_btu5953MEgyWVVkqzE_xo_2ePHfZPcRYjSU';
+var sb = (typeof supabase!=='undefined' && supabase.createClient) ? supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY) : null;
+var syncUser = null;
+var syncStatus = 'signed-out';
+var pushTimer = null;
+
+function initSync(){
+  if(!sb) return;
+  sb.auth.getSession().then(function(res){
+    var session = res && res.data && res.data.session;
+    if(session && session.user) onSignedIn(session.user);
+    else updateSyncUI();
+  });
+  sb.auth.onAuthStateChange(function(event, session){
+    if(event==='SIGNED_IN' && session && session.user) onSignedIn(session.user);
+    else if(event==='SIGNED_OUT'){ syncUser=null; syncStatus='signed-out'; updateSyncUI(); }
+  });
+}
+function onSignedIn(user){
+  syncUser = user;
+  pullFromCloud();
+}
+function normalizeApp(){
+  if(!APP.shopRemoved)APP.shopRemoved={};
+  if(!APP.shopChecked)APP.shopChecked={};
+  if(!APP.shopQty)APP.shopQty={};
+  if(!APP.customIngredients)APP.customIngredients={};
+  for(var _ck in APP.customIngredients){if(APP.customIngredients.hasOwnProperty(_ck))MDB[_ck]=APP.customIngredients[_ck];}
+  if(!APP.favorites)APP.favorites={};
+  if(!APP.dislikes)APP.dislikes={};
+  if(!APP.weights)APP.weights=[];
+  if(!APP.recipes)APP.recipes=[];
+  if(!APP.weeks)APP.weeks={};
+  if(!APP.currentWeek)APP.currentWeek=getMonday(new Date());
+  for(var _wk in APP.weeks){if(APP.weeks.hasOwnProperty(_wk))ensureWk(_wk);}
+  getPrefs();
+}
+function pullFromCloud(){
+  if(!sb||!syncUser) return;
+  syncStatus='syncing'; updateSyncUI();
+  sb.from('planner_data').select('data').eq('user_id', syncUser.id).maybeSingle().then(function(res){
+    if(res.error){ syncStatus='error'; updateSyncUI(); return; }
+    if(res.data && res.data.data){
+      APP = res.data.data;
+      normalizeApp();
+      localStorage.setItem('wp_v7', JSON.stringify(APP));
+      refreshAllPages();
+      syncStatus='synced'; updateSyncUI();
+    } else {
+      syncStatus='synced'; updateSyncUI();
+      pushToCloud(true);
+    }
+  });
+}
+function pushToCloud(immediate){
+  if(!sb||!syncUser) return;
+  if(pushTimer){ clearTimeout(pushTimer); pushTimer=null; }
+  var doPush = function(){
+    syncStatus='syncing'; updateSyncUI();
+    sb.from('planner_data').upsert({user_id:syncUser.id, data:APP, updated_at:new Date().toISOString()}).then(function(res){
+      syncStatus = res.error ? 'error' : 'synced';
+      updateSyncUI();
+    });
+  };
+  if(immediate) doPush(); else pushTimer=setTimeout(doPush, 1500);
+}
+function refreshAllPages(){
+  renderPlanner();
+  if(document.getElementById('page-progress').classList.contains('active')){renderWeight();renderReview();}
+  if(document.getElementById('page-shopping').classList.contains('active'))renderShopping();
+  if(document.getElementById('page-prefs').classList.contains('active'))renderPrefs();
+  if(document.getElementById('page-recipes').classList.contains('active'))renderRecipes();
+}
+function updateSyncUI(){
+  var el = document.getElementById('navSync');
+  if(!el) return;
+  if(!sb){ el.title='Sync unavailable'; el.classList.remove('synced'); return; }
+  if(syncUser){
+    el.classList.add('synced');
+    el.title = (syncStatus==='syncing'?'Syncing... ':'Synced - ')+'Signed in as '+syncUser.email;
+  } else {
+    el.classList.remove('synced');
+    el.title='Sign in to sync across devices';
+  }
+}
+function openSyncPanel(){
+  document.getElementById('ptag').textContent='SYNC';
+  document.getElementById('ptitle').textContent='Cloud sync';
+  document.getElementById('psub').textContent='';
+  var body = document.getElementById('pbody');
+  if(!sb){
+    body.innerHTML = '<div class="banner">Cloud sync is unavailable right now.</div>';
+    openPanel();
+    return;
+  }
+  if(syncUser){
+    body.innerHTML = ''
+      +'<div class="banner">Signed in as <b>'+syncUser.email+'</b>. Your planner syncs automatically across devices.</div>'
+      +'<button class="btn" id="syncSignOut">Sign out</button>';
+    document.getElementById('syncSignOut').addEventListener('click', function(){ sb.auth.signOut(); closePanel(); });
+  } else {
+    body.innerHTML = ''
+      +'<div class="banner">Sign in with email to sync your planner across devices. We\'ll send a magic link - no password needed.</div>'
+      +'<input type="email" id="syncEmail" placeholder="you@email.com" style="width:100%;margin-bottom:10px;background:var(--bg);border:1px solid var(--b2);border-radius:8px;padding:9px 10px;font-size:13px;color:var(--tx);">'
+      +'<button class="btn primary" id="syncSendLink">Send magic link</button>'
+      +'<div id="syncMsg" style="margin-top:10px;font-size:11.5px;color:var(--mu);"></div>';
+    document.getElementById('syncSendLink').addEventListener('click', function(){
+      var email = document.getElementById('syncEmail').value.trim();
+      if(!email) return;
+      document.getElementById('syncMsg').textContent='Sending...';
+      sb.auth.signInWithOtp({email:email, options:{emailRedirectTo: window.location.href}}).then(function(res){
+        document.getElementById('syncMsg').textContent = res.error ? ('Error: '+res.error.message) : 'Check your email for the sign-in link!';
+      });
+    });
+  }
+  openPanel();
+}
 
 var APP = loadApp() || {
   currentWeek: getMonday(new Date()),
@@ -3603,6 +3736,7 @@ getPrefs(); // ensure prefs structure exists
 saveApp();
 renderPlanner();
 })();
+initSync();
 </script>
 </body>
 </html>
